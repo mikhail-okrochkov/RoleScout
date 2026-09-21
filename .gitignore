@@ -216,3 +216,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# RoleScout runtime files
+resume.md
+*.db
+.env
+PLAN.md
+geocode_cache.json

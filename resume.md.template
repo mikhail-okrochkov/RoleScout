@@ -1,0 +1,35 @@
+# Your Name
+
+**Email:** you@example.com | **LinkedIn:** linkedin.com/in/you | **GitHub:** github.com/you | **Location:** City, Country
+
+## Summary
+
+2–3 sentences describing your professional identity, primary expertise, and what kind of role you're targeting.
+
+## Skills
+
+- **Languages:** Python, Go, TypeScript, ...
+- **Frameworks:** FastAPI, React, Django, ...
+- **Infrastructure:** AWS, Docker, Kubernetes, PostgreSQL, Redis, ...
+- **Other:** System design, technical leadership, ...
+
+## Experience
+
+### Senior Software Engineer — ACME Corp (2021–Present)
+
+- Bullet points with measurable impact: what you built and the outcome
+- Led migration of monolith to microservices, reducing p99 latency by 40%
+- Mentored 3 junior engineers; led quarterly architecture reviews
+
+### Software Engineer — Startup Inc (2018–2021)
+
+- Built real-time data pipeline processing 500k events/day using Kafka + Python
+- ...
+
+## Education
+
+BSc Computer Science — State University (2018)
+
+## Open Source / Projects (optional)
+
+- [project-name](https://github.com/you/project): one-line description
