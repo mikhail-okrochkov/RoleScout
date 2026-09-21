@@ -4,13 +4,14 @@ import json
 import logging
 import time
 from math import asin, cos, radians, sin, sqrt
-from pathlib import Path
 
 import httpx
 
+from rolescout.config import settings as _settings
+
 logger = logging.getLogger(__name__)
 
-_CACHE_PATH = Path("geocode_cache.json")
+_CACHE_PATH = _settings.db_path.parent / "geocode_cache.json"
 _cache: dict[str, tuple[float, float] | None] = {}
 _cache_dirty = False
 _cache_loaded = False

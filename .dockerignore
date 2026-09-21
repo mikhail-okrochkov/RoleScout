@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+resume.md
+*.db
+geocode_cache.json
+.git/
+.github/
+tests/
+PLAN.md
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
