@@ -51,16 +51,25 @@ def test_comp_no_target(monkeypatch: pytest.MonkeyPatch) -> None:
     assert _compensation_score(100_000, 150_000) == 0.5
 
 
-def test_comp_full_overlap(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_comp_floor_above_target_min(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Job floor ($200k) exceeds target minimum ($180k) → perfect comp
+    monkeypatch.setattr("rolescout.ranker.settings.target_salary_min", 180_000)
+    monkeypatch.setattr("rolescout.ranker.settings.target_salary_max", 280_000)
+    assert _compensation_score(200_000, 340_000) == 1.0
+
+
+def test_comp_floor_at_target_min(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Job floor exactly at target minimum → perfect comp
     monkeypatch.setattr("rolescout.ranker.settings.target_salary_min", 130_000)
     monkeypatch.setattr("rolescout.ranker.settings.target_salary_max", 160_000)
-    assert _compensation_score(120_000, 180_000) == 1.0
+    assert _compensation_score(130_000, 160_000) == 1.0
 
 
 def test_comp_partial_overlap(monkeypatch: pytest.MonkeyPatch) -> None:
+    # Job ceiling reaches target min but floor is below — might negotiate up
     monkeypatch.setattr("rolescout.ranker.settings.target_salary_min", 150_000)
     monkeypatch.setattr("rolescout.ranker.settings.target_salary_max", 180_000)
-    assert _compensation_score(130_000, 160_000) == 0.7
+    assert _compensation_score(120_000, 160_000) == 0.7
 
 
 def test_comp_no_overlap_below(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -78,7 +87,9 @@ def test_location_remote_always_1(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_location_preferred_city_onsite(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("rolescout.ranker.settings.preferred_locations", ["Seattle", "San Francisco"])
+    monkeypatch.setattr(
+        "rolescout.ranker.settings.preferred_locations", ["Seattle", "San Francisco"]
+    )
     monkeypatch.setattr("rolescout.ranker.settings.acceptable_locations", [])
     assert _location_score(False, "Seattle, WA") == 1.0
 
@@ -114,5 +125,6 @@ def test_composite_weights(monkeypatch: pytest.MonkeyPatch) -> None:
     assessment = FitAssessment(fit_level=FitLevel.STRONG, fit_score=1.0, reasoning="great")
     scores = compute_scores(job, assessment)
 
-    expected = 0.50 * 1.0 + 0.30 * 1.0 + 0.10 * 0.5 + 0.10 * 1.0
+    # weights: 80% fit + 10% comp (no salary → 0.5) + 10% location (remote → 1.0)
+    expected = 0.80 * 1.0 + 0.10 * 0.5 + 0.10 * 1.0
     assert scores["composite_score"] == pytest.approx(expected, abs=0.01)

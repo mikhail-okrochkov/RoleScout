@@ -10,6 +10,7 @@ services:
     volumes:
       - rolescout_data:/data
       - ./resume.md:/app/resume.md:ro
+      - ./config.yaml:/app/config.yaml:ro
 
 volumes:
   rolescout_data:

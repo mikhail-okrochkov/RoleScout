@@ -18,7 +18,27 @@ def get_engine():  # type: ignore[return]
 
 
 def init_db() -> None:
-    SQLModel.metadata.create_all(get_engine())
+    from sqlalchemy import text
+
+    engine = get_engine()
+    SQLModel.metadata.create_all(engine)
+    # Add columns introduced after initial schema — safe to run repeatedly
+    new_columns = [
+        "ALTER TABLE scored_jobs ADD COLUMN scorer TEXT NOT NULL DEFAULT 'unknown'",
+        "ALTER TABLE scored_jobs ADD COLUMN score_skills REAL",
+        "ALTER TABLE scored_jobs ADD COLUMN score_seniority REAL",
+        "ALTER TABLE scored_jobs ADD COLUMN score_domain REAL",
+        "ALTER TABLE scored_jobs ADD COLUMN score_responsibilities REAL",
+        "ALTER TABLE scored_jobs ADD COLUMN seniority_direction TEXT",
+        "ALTER TABLE scored_jobs ADD COLUMN scorer_details TEXT",
+    ]
+    with engine.connect() as conn:
+        for stmt in new_columns:
+            try:
+                conn.execute(text(stmt))
+                conn.commit()
+            except Exception:
+                pass  # column already exists
 
 
 def save_jobs(jobs: list[ScoredJob]) -> None:

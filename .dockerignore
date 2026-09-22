@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 .env
 resume.md
+config.yaml
 *.db
 geocode_cache.json
 .git/

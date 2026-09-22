@@ -1,0 +1,37 @@
+target_roles:
+  - Staff Data Scientist
+  - Principal Data Scientist
+  - Lead Data Scientist
+
+target_location: Remote
+
+target_salary_min: 180000
+target_salary_max: 280000
+
+# Tier 1 — full location score (remote always scores 1.0 regardless)
+preferred_locations:
+  - Seattle
+  - San Francisco
+  - Bay Area
+  - San Diego
+
+# Tier 2 — partial score (0.6); good only if compensation is strong
+acceptable_locations:
+  - Boston
+
+# Radius in miles around each city above (catches suburbs like Fairfax VA near DC)
+location_radius_miles: 50
+
+# Jobs containing any of these phrases are dropped before scoring
+exclude_keywords:
+  - security clearance
+  - clearance required
+  - top secret
+  - ts/sci
+
+# Fetcher pagination
+adzuna_pages: 3
+jsearch_pages_per_role: 1  # keep at 1 for RapidAPI free tier (10 req/day)
+
+# Jobs per Claude/Jev API call
+batch_size: 10

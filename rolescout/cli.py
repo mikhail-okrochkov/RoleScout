@@ -34,7 +34,16 @@ def cli() -> None:
 )
 @click.option("--dry-run", is_flag=True, default=False, help="Score but do not save to DB.")
 @click.option("--limit", "-n", default=0, type=int, help="Max jobs to score (0 = no limit).")
-def fetch_and_score(sources: tuple[str, ...], dry_run: bool, limit: int) -> None:
+@click.option(
+    "--scorer",
+    type=click.Choice(["claude", "jev"]),
+    default="jev",
+    show_default=True,
+    help="Scoring backend: jev (default, TypeSafe) or claude.",
+)
+def fetch_and_score(
+    sources: tuple[str, ...], dry_run: bool, limit: int, scorer: str
+) -> None:
     """Fetch jobs from all configured sources and score them against resume.md."""
     from rolescout.fetchers import get_all_fetchers
     from rolescout.ranker import rank_jobs
@@ -87,7 +96,18 @@ def fetch_and_score(sources: tuple[str, ...], dry_run: bool, limit: int) -> None
         TimeElapsedColumn,
     )
 
-    scorer = JobScorer()
+    if scorer == "jev" and settings.typesafe_api_key:
+        from rolescout.jev_scorer import JevScorer
+
+        resume = settings.resume_path.read_text(encoding="utf-8")
+        active_scorer = JevScorer(resume)  # type: ignore[assignment]
+        console.print("[cyan]Scorer: Jev (TypeSafe)[/]")
+    else:
+        if scorer == "jev":
+            console.print("[yellow]TYPESAFE_API_KEY not set — falling back to Claude.[/]")
+        active_scorer = JobScorer()
+        console.print("[cyan]Scorer: Claude[/]")
+
     with Progress(
         SpinnerColumn(),
         "[progress.description]{task.description}",
@@ -97,12 +117,13 @@ def fetch_and_score(sources: tuple[str, ...], dry_run: bool, limit: int) -> None
         console=console,
     ) as progress:
         task = progress.add_task("Scoring with Claude...", total=len(unique_jobs))
-        pairs = scorer.score_jobs(
+        pairs = active_scorer.score_jobs(
             unique_jobs,
             on_batch=lambda done, _total: progress.update(task, completed=done),
         )
 
-    scored = rank_jobs(pairs)
+    active_scorer_name = "jev" if (scorer == "jev" and settings.typesafe_api_key) else "claude"
+    scored = rank_jobs(pairs, scorer=active_scorer_name)
 
     table = Table(title="Scoring Summary")
     table.add_column("Fit Level")

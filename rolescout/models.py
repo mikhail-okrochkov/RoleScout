@@ -73,7 +73,16 @@ class ScoredJob(SQLModel, table=True):
     location_score: float
     composite_score: float = Field(index=True)
 
+    # Per-dimension scores (Jev only; None for Claude)
+    score_skills: float | None = None
+    score_seniority: float | None = None
+    score_domain: float | None = None
+    score_responsibilities: float | None = None
+    seniority_direction: str | None = None  # overqualified | well_matched | underqualified
+    scorer_details: str | None = None  # JSON blob of Jev probability distributions
+
     # Metadata
     tags: str = Field(default="")  # comma-separated
+    scorer: str = Field(default="unknown")  # "claude" or "jev"
     fetched_at: datetime = Field(default_factory=datetime.utcnow)
     scored_at: datetime | None = None

@@ -223,3 +223,4 @@ resume.md
 .env
 PLAN.md
 geocode_cache.json
+config.yaml

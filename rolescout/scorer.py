@@ -23,6 +23,14 @@ class FitAssessment:
     fit_level: FitLevel
     fit_score: float
     reasoning: str
+    # Per-dimension scores (populated by JevScorer; None for Claude)
+    score_skills: float | None = None
+    score_seniority: float | None = None
+    score_domain: float | None = None
+    score_responsibilities: float | None = None
+    seniority_direction: str | None = None  # "overqualified" | "well_matched" | "underqualified"
+    # Full probability distributions from Jev (serialized as JSON in ScoredJob)
+    scorer_details: dict | None = None
 
 
 _FALLBACK = FitAssessment(fit_level=FitLevel.LOW, fit_score=0.2, reasoning="Scoring unavailable.")

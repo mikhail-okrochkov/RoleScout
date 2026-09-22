@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 
 from rolescout.config import settings
@@ -8,8 +9,7 @@ from rolescout.scorer import FitAssessment
 
 _FIT_SCORE_MAP = {FitLevel.STRONG: 1.0, FitLevel.MEDIUM: 0.6, FitLevel.LOW: 0.2}
 
-_W_FIT = 0.50
-_W_RECENCY = 0.30
+_W_FIT = 0.80
 _W_COMPENSATION = 0.10
 _W_LOCATION = 0.10
 
@@ -26,27 +26,23 @@ def _recency_score(posted_at: datetime | None) -> float:
 
 def _compensation_score(salary_min: int | None, salary_max: int | None) -> float:
     t_min = settings.target_salary_min
-    t_max = settings.target_salary_max
 
     if salary_min is None and salary_max is None:
-        return 0.5
-    if t_min is None and t_max is None:
-        return 0.5
+        return 0.5  # no salary data
+    if t_min is None:
+        return 0.5  # no target set
 
     j_min = salary_min or 0
     j_max = salary_max or salary_min or 0
-    t_lo = t_min or 0
-    t_hi = t_max or t_min or 0
 
-    # Full containment or full overlap
-    if j_min <= t_lo and j_max >= t_hi:
+    # Job floor meets or beats target minimum — definitely good comp
+    if j_min >= t_min:
         return 1.0
-    # Partial overlap
-    overlap = min(j_max, t_hi) - max(j_min, t_lo)
-    if overlap > 0:
+    # Job ceiling reaches target minimum — might negotiate up
+    if j_max >= t_min:
         return 0.7
-    # Near miss: job ceiling exceeds target floor
-    if j_max > t_lo:
+    # Job ceiling is close (within 10%) — near miss
+    if j_max >= t_min * 0.9:
         return 0.3
     return 0.0
 
@@ -89,7 +85,6 @@ def compute_scores(job: Job, assessment: FitAssessment) -> dict[str, float]:
     location = _location_score(job.remote, job.location)
     composite = (
         _W_FIT * fit_score
-        + _W_RECENCY * recency
         + _W_COMPENSATION * compensation
         + _W_LOCATION * location
     )
@@ -102,7 +97,7 @@ def compute_scores(job: Job, assessment: FitAssessment) -> dict[str, float]:
     }
 
 
-def rank_jobs(pairs: list[tuple[Job, FitAssessment]]) -> list[ScoredJob]:
+def rank_jobs(pairs: list[tuple[Job, FitAssessment]], scorer: str = "unknown") -> list[ScoredJob]:
     scored: list[ScoredJob] = []
     now = datetime.now(tz=UTC)
 
@@ -121,6 +116,7 @@ def rank_jobs(pairs: list[tuple[Job, FitAssessment]]) -> list[ScoredJob]:
                 salary_max=job.salary_max,
                 remote=job.remote,
                 tags=",".join(job.tags),
+                scorer=scorer,
                 fit_level=assessment.fit_level,
                 fit_score=scores["fit_score"],
                 fit_reasoning=assessment.reasoning,
@@ -128,6 +124,16 @@ def rank_jobs(pairs: list[tuple[Job, FitAssessment]]) -> list[ScoredJob]:
                 compensation_score=scores["compensation_score"],
                 location_score=scores["location_score"],
                 composite_score=scores["composite_score"],
+                score_skills=assessment.score_skills,
+                score_seniority=assessment.score_seniority,
+                score_domain=assessment.score_domain,
+                score_responsibilities=assessment.score_responsibilities,
+                seniority_direction=assessment.seniority_direction,
+                scorer_details=(
+                    json.dumps(assessment.scorer_details)
+                    if assessment.scorer_details
+                    else None
+                ),
                 scored_at=now,
             )
         )
